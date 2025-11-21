@@ -53,17 +53,21 @@ const CountryLimits = () => {
                       </SelectContent>
                     </Select>
 
-                    <Input
-                      placeholder="country code/name"
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      className="w-[250px]"
-                    />
-
-                    <Button variant="default" size="sm">
-                      <Search className="h-4 w-4 mr-2" />
-                      Search
-                    </Button>
+                    <div className="relative w-[250px]">
+                      <Input
+                        placeholder="country code/name"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        className="pr-10"
+                      />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      >
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
 
                     <Button variant="destructive" size="sm">
                       <X className="h-4 w-4 mr-2" />
