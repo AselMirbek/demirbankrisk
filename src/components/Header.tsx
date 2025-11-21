@@ -33,6 +33,19 @@ const Header = () => {
                   </div>
                 </div>
               </div>
+   {/* ADMIN PANEL */}
+              <div>
+                  <h3 className="font-semibold text-foreground mb-2">Admin Panel</h3>
+                  <div className="ml-4 space-y-2">
+                    <button
+                      className="block text-sm text-accent hover:text-accent/80 font-medium"
+                      onClick={() => navigate("/admin")}
+                    >
+                      Admin
+                    </button>
+                  </div>
+              </div>
+
             </SheetContent>
           </Sheet>
 
