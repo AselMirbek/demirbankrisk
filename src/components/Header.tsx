@@ -39,8 +39,10 @@ const Header = () => {
                   <div className="ml-4 space-y-2">
                     <button
                       className="block text-sm text-accent hover:text-accent/80 font-medium"
-                      onClick={() => navigate("/admin")}
-                    >
+                      onClick={() => {   document.body.click(); // закрывает Sheet
+                                      navigate("/admin");
+                                     }}
+                      >
                       Admin
                     </button>
                   </div>
