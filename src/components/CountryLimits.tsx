@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,6 +225,7 @@ const CountryLimits = () => {
   const [generalData, setGeneralData] = useState(generateGeneralData());
   const [pendingData, setPendingData] = useState(generatePendingData());
   const historyData = generateHistoryData();
+const navigate = useNavigate();
 
   const handleEdit = (country: any) => {
     setSelectedCountry(country);
@@ -247,6 +249,16 @@ const CountryLimits = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-foreground">Risk Management → Country Limits</h1>
         </div>
+
+        
+<div className="mb-4">
+  <Button
+    className="bg-primary text-primary-foreground"
+    onClick={() => navigate("/admin")}
+  >
+    Go to Admin Panel
+  </Button>
+</div>
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-4">
