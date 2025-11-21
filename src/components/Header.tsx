@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
+import { useNavigate } from "react-router-dom";
 const Header = () => {
   return (
     <header className="border-b border-border bg-card sticky top-0 z-50">
