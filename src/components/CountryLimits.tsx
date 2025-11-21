@@ -63,9 +63,9 @@ const CountryLimits = () => {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-accent/10"
                       >
-                        <Search className="h-4 w-4 text-muted-foreground" />
+                        <Search className="h-4 w-4 text-accent" />
                       </Button>
                     </div>
 
