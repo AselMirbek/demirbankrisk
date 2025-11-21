@@ -17,6 +17,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+           {/* NEW ROUTES */}
+          <Route path="/limits" element={<CountryLimits />} />
+          <Route path="/admin" element={<AdminCountryLimits />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
