@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Download, Edit, Plus, Search, X } from "lucide-react";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
+import AddCountryLimitDialog from "./AddCountryLimitDialog";
+
 
 // Generate 50 records for General tab
 const generateGeneralData = () => {
@@ -221,6 +223,7 @@ const CountryLimits = () => {
   const [filterOpen, setFilterOpen] = useState(true);
   const [searchValue, setSearchValue] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addCountryDialogOpen, setAddCountryDialogOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [generalData, setGeneralData] = useState(generateGeneralData());
   const [pendingData, setPendingData] = useState(generatePendingData());
@@ -230,6 +233,10 @@ const navigate = useNavigate();
   const handleEdit = (country: any) => {
     setSelectedCountry(country);
     setEditDialogOpen(true);
+  };
+const handleAdd = (country: any) => {
+    setSelectedCountry(country);
+    setAddCountryDialogOpen(true);
   };
 
   const handleSave = (updatedCountry: any) => {
@@ -303,14 +310,17 @@ const navigate = useNavigate();
                       Clear Filter
                     </Button>
 
-                    <Button className="bg-success hover:bg-success/90" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Country Limit
+                    <Button 
+                            size="sm" 
+                            className="bg-success text-white hover:bg-success/90"
+                            onClick={() => setAddCountryDialogOpen(true)}
+                            >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Country Limit
                     </Button>
-
                     <Button className="bg-success hover:bg-success/90" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Excel
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Excel
                     </Button>
                   </div>
                 </div>
@@ -480,6 +490,12 @@ const navigate = useNavigate();
       <EditCountryLimitDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
+        country={selectedCountry}
+        onSave={handleSave}
+      />
+      <AddCountryLimitDialog
+        open={addCountryDialogOpen}
+        onOpenChange={setAddCountryDialogOpen}
         country={selectedCountry}
         onSave={handleSave}
       />
