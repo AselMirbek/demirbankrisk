@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import CountryLimits from "@/components/AdminCountryLimits";
+import AdminCountryLimits  from "@/components/AdminCountryLimits";
 
 const Admin = () => {
   return (
