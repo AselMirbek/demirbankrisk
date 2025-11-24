@@ -119,7 +119,7 @@ export default function AdminCountryLimits() {
   return (
     <div className="min-h-screen bg-background p-6">
       <h1 className="text-2xl font-semibold mb-6">
-        Admin Panel → Country Limits
+        Admin Panel -- Country Limits
       </h1>
 
       <Tabs defaultValue="approval" className="space-y-4">
