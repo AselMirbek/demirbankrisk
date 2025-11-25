@@ -1,3 +1,4 @@
+// components/CountryLimits.tsx
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
 
-/** Типы */
 export type HistoryRecord = {
   changedAt: string;
   changedBy: string;
@@ -48,42 +48,103 @@ export type CountryRecord = {
   lastUpdated: string;
   lastUpdatedBy: string;
   status: "Active" | "PendingMaker" | "DeletedByMaker" | "Approved" | "Dissmised";
-  // pending application stored inside the same row
   pending: PendingBlock;
-  // history array
   history: HistoryRecord[];
 };
 
-/** Генератор демо-данных (можешь заменить select-ами) */
-const demoCountries = [
-  { code: "GB", name: "United Kingdom" },
-  { code: "US", name: "United States" },
-  { code: "DE", name: "Germany" },
-  { code: "FR", name: "France" },
-  { code: "TR", name: "Turkey" },
-];
-
 const today = () => new Date().toISOString().split("T")[0];
 
-const generateDemoData = (): CountryRecord[] =>
-  demoCountries.map((c, i) => ({
-    code: c.code,
-    name: c.name,
-    balance: `${Math.floor(Math.random() * 500 + 50)},000`,
-    landing: `${Math.floor(Math.random() * 50 + 5)},000`,
-    currentLimit: `${Math.floor(200 + i * 50)}000`,
-    overlimit: Math.random() > 0.7 ? `${Math.floor(Math.random() * 50)}000` : "0",
-    limitExceeded: Math.random() > 0.8 ? "Yes" : "No",
-    currentValidUntil: Math.random() > 0.5 ? "Unlimited" : `2025-${String(Math.floor(Math.random() * 12 + 1)).padStart(2, "0")}-${String(Math.floor(Math.random() * 28 + 1)).padStart(2, "0")}`,
-    currentProtocol: `BD-${100 + i}/2024`,
-    lastUpdated: today(),
-    lastUpdatedBy: ["risk_maker", "risk_user", "risk_admin"][i % 3],
-    status: "Active",
-    pending: null,
-    history: [],
-  }));
+/** demo initial data with 4 history examples per row (Approved / Dismissed / DeletedByMaker / PendingMaker) */
+const initialData = (): CountryRecord[] => {
+  const base = [
+    { code: "GB", name: "United Kingdom" },
+    { code: "US", name: "United States" },
+    { code: "DE", name: "Germany" },
+    { code: "FR", name: "France" },
+    { code: "TR", name: "Turkey" },
+  ];
 
-/** Компонент */
+  return base.map((b, i) => {
+    const hist: HistoryRecord[] = [
+      {
+        changedAt: "2025-01-15",
+        changedBy: "maker_user",
+        approvedBy: "approval_user",
+        oldLimit: `${200000 + i * 10000}`,
+        newLimit: `${250000 + i * 10000}`,
+        oldValidUntil: "2024-12-31",
+        newValidUntil: "2025-12-31",
+        status: "Approved",
+      },
+      {
+        changedAt: "2024-11-10",
+        changedBy: "maker_user",
+        approvedBy: "approval_user",
+        oldLimit: `${150000 + i * 5000}`,
+        newLimit: `${200000 + i * 8000}`,
+        oldValidUntil: "2023-12-31",
+        newValidUntil: "2024-12-31",
+        status: "Dissmised",
+      },
+      {
+        changedAt: "2024-10-01",
+        changedBy: "maker_user",
+        approvedBy: null,
+        oldLimit: `${120000 + i * 3000}`,
+        newLimit: `${140000 + i * 3000}`,
+        oldValidUntil: "2023-06-01",
+        newValidUntil: "2024-06-01",
+        status: "DeletedByMaker",
+      },
+      {
+        changedAt: "2025-02-01",
+        changedBy: "maker_user",
+        approvedBy: null,
+        oldLimit: `${250000 + i * 12000}`,
+        newLimit: `${300000 + i * 12000}`,
+        oldValidUntil: "2025-01-01",
+        newValidUntil: "2026-01-01",
+        status: "PendingMaker",
+      },
+    ];
+
+    // Put last entry as current pending (for some rows) to demo disabled edit
+    const pending =
+      i % 2 === 0
+        ? {
+            oldLimit: `${250000 + i * 12000}`,
+            newLimit: `${300000 + i * 12000}`,
+            oldValidUntil: "2025-01-01",
+            newValidUntil: "2026-01-01",
+            oldProtocol: `BD-${100 + i}/2024`,
+            newProtocol: `BD-${200 + i}/2025`,
+            requestedBy: "maker_user",
+            requestedAt: "2025-02-01T10:00:00Z",
+            status: "PendingMaker" as const,
+          }
+        : null;
+
+    const currentLimit = pending ? pending.oldLimit! : `${300000 + i * 10000}`;
+
+    return {
+      code: b.code,
+      name: b.name,
+      balance: `${Math.floor(Math.random() * 500 + 50)},000`,
+      landing: `${Math.floor(Math.random() * 50 + 5)},000`,
+      currentLimit,
+      overlimit: Math.random() > 0.7 ? `${Math.floor(Math.random() * 50)}000` : "0",
+      limitExceeded: Math.random() > 0.8 ? "Yes" : "No",
+      currentValidUntil: pending ? pending.oldValidUntil! : `2025-12-31`,
+      currentProtocol: `BD-${100 + i}/2024`,
+      lastUpdated: today(),
+      lastUpdatedBy: ["risk_maker", "risk_user", "risk_admin"][i % 3],
+      status: pending ? "PendingMaker" : "Active",
+      pending,
+      history: hist,
+    } as CountryRecord;
+  });
+};
+
 const CountryLimits: React.FC = () => {
   const navigate = useNavigate();
   const [filterOpen, setFilterOpen] = useState(true);
@@ -92,71 +153,61 @@ const CountryLimits: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
 
-  const [data, setData] = useState<CountryRecord[]>(generateDemoData());
+  const [data, setData] = useState<CountryRecord[]>(initialData());
   const [selected, setSelected] = useState<CountryRecord | null>(null);
 
-  /** Фильтрирование по коду/имени */
   const filtered = useMemo(() => {
     if (!searchValue) return data;
     const s = searchValue.toLowerCase();
     return data.filter((r) => r.code.toLowerCase().includes(s) || r.name.toLowerCase().includes(s));
   }, [data, searchValue]);
 
-  /** Открыть edit dialog (maker) */
   const openEdit = (row: CountryRecord) => {
     setSelected(row);
     setEditOpen(true);
   };
 
-  /** Open view */
   const openView = (row: CountryRecord) => {
     setSelected(row);
     setViewOpen(true);
   };
 
-  /** Save request from Edit dialog (Maker submits request) */
-  const handleSubmitRequest = (updated: CountryRecord) => {
-    // Updated contains pending fields (we assume Edit dialog returns CountryRecord with pending filled)
+  /** Maker submits request (create/update pending on row) */
+  const handleSubmitRequest = (updatedPending: { code: string; pending: PendingBlock }) => {
     setData((prev) =>
       prev.map((r) => {
-        if (r.code !== updated.code) return r;
-        // create pending block from updated
-        const pending: PendingBlock = {
-          oldLimit: r.currentLimit,
-          newLimit: updated.pending?.newLimit ?? updated.currentLimit,
-          oldValidUntil: r.currentValidUntil,
-          newValidUntil: updated.pending?.newValidUntil ?? r.currentValidUntil,
-          oldProtocol: r.currentProtocol,
-          newProtocol: updated.pending?.newProtocol ?? r.currentProtocol,
-          requestedBy: updated.pending?.requestedBy ?? "maker_user",
-          requestedAt: updated.pending?.requestedAt ?? new Date().toISOString(),
-          status: "PendingMaker",
-        };
+        if (r.code !== updatedPending.code) return r;
 
-        // add history record for creation of request
-        const historyEntry: HistoryRecord = {
-          changedAt: pending.requestedAt!,
-          changedBy: pending.requestedBy!,
+        // create history entry for request creation
+        const now = new Date().toISOString();
+        const p = updatedPending.pending!;
+        const hist: HistoryRecord = {
+          changedAt: now,
+          changedBy: p.requestedBy ?? "maker_user",
           approvedBy: null,
-          oldLimit: pending.oldLimit,
-          newLimit: pending.newLimit,
-          oldValidUntil: pending.oldValidUntil,
-          newValidUntil: pending.newValidUntil,
+          oldLimit: p.oldLimit,
+          newLimit: p.newLimit,
+          oldValidUntil: p.oldValidUntil,
+          newValidUntil: p.newValidUntil,
           status: "PendingMaker",
         };
 
         return {
           ...r,
-          pending,
+          pending: {
+            ...p,
+            status: "PendingMaker",
+            requestedAt: p.requestedAt ?? now,
+            requestedBy: p.requestedBy ?? "maker_user",
+          },
           status: "PendingMaker",
-          // live values not changed
-          history: [historyEntry, ...r.history],
+          history: [hist, ...r.history],
         };
       })
     );
   };
 
-  /** Withdraw request (Maker) - mark DeletedByMaker and add history entry */
+  /** Withdraw (maker) - mark DeletedByMaker and add history entry */
   const withdrawRequest = (code: string, by = "maker_user") => {
     setData((prev) =>
       prev.map((r) => {
@@ -176,25 +227,20 @@ const CountryLimits: React.FC = () => {
         return {
           ...r,
           pending: null,
-          status: "Active", // removed from pending
+          status: "Active",
           history: [hist, ...r.history],
         };
       })
     );
   };
 
-  /** Approve request (would be used by approval role) - applies live change, history updated */
+  /** Approve (for simulation) */
   const approveRequest = (code: string, approver = "approval_user") => {
     setData((prev) =>
       prev.map((r) => {
         if (r.code !== code) return r;
         if (!r.pending) return r;
         const now = new Date().toISOString();
-        // apply pending to live
-        const newLiveLimit = r.pending.newLimit ?? r.currentLimit;
-        const newLiveValid = r.pending.newValidUntil ?? r.currentValidUntil;
-        const newProt = r.pending.newProtocol ?? r.currentProtocol;
-
         const hist: HistoryRecord = {
           changedAt: now,
           changedBy: r.pending.requestedBy ?? "maker_user",
@@ -205,12 +251,11 @@ const CountryLimits: React.FC = () => {
           newValidUntil: r.pending.newValidUntil,
           status: "Approved",
         };
-
         return {
           ...r,
-          currentLimit: newLiveLimit,
-          currentValidUntil: newLiveValid,
-          currentProtocol: newProt,
+          currentLimit: r.pending.newLimit ?? r.currentLimit,
+          currentValidUntil: r.pending.newValidUntil ?? r.currentValidUntil,
+          currentProtocol: r.pending.newProtocol ?? r.currentProtocol,
           lastUpdated: now.split("T")[0],
           lastUpdatedBy: approver,
           pending: null,
@@ -221,7 +266,7 @@ const CountryLimits: React.FC = () => {
     );
   };
 
-  /** Reject request (approval) - leave live as is but history record */
+  /** Reject (for simulation) */
   const rejectRequest = (code: string, approver = "approval_user") => {
     setData((prev) =>
       prev.map((r) => {
@@ -248,7 +293,6 @@ const CountryLimits: React.FC = () => {
     );
   };
 
-  /** Add new country via Add dialog */
   const handleAdd = (entry: any) => {
     const newRec: CountryRecord = {
       code: entry.code,
@@ -260,7 +304,7 @@ const CountryLimits: React.FC = () => {
       limitExceeded: entry.limitExceeded ?? "No",
       currentValidUntil: entry.validUntil ?? "Unlimited",
       currentProtocol: entry.protocolNo ?? "",
-      lastUpdated: entry.lastUpdated ?? today(),
+      lastUpdated: today(),
       lastUpdatedBy: entry.lastUpdatedBy ?? "maker_user",
       status: "Active",
       pending: null,
@@ -312,10 +356,7 @@ const CountryLimits: React.FC = () => {
                     Add Country Limit
                   </Button>
 
-                  <Button size="sm" className="bg-muted/80" onClick={() => {
-                    // implement export logic
-                    console.log("Export to excel (implement)");
-                  }}>
+                  <Button size="sm" className="bg-muted/80" onClick={() => { console.log("Export to excel (implement)"); }}>
                     <Download className="h-4 w-4 mr-2" />
                     Download Excel
                   </Button>
@@ -325,9 +366,9 @@ const CountryLimits: React.FC = () => {
           </div>
         </Collapsible>
 
-        {/* General table (single source of truth) */}
+        {/* General table */}
         <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto relative">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-border">
@@ -338,10 +379,6 @@ const CountryLimits: React.FC = () => {
                   <TableHead className="border-r border-border">Limit</TableHead>
                   <TableHead className="border-r border-border">Overlimit</TableHead>
                   <TableHead className="border-r border-border">Limit Exceeded</TableHead>
-                  <TableHead className="border-r border-border">Valid Until</TableHead>
-                  <TableHead className="border-r border-border">Protocol No</TableHead>
-                  <TableHead className="border-r border-border">Last Updated</TableHead>
-                  <TableHead className="border-r border-border">Last Updated By</TableHead>
                   <TableHead className="border-r border-border">Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -360,40 +397,49 @@ const CountryLimits: React.FC = () => {
                         {row.limitExceeded}
                       </Badge>
                     </TableCell>
-                    <TableCell className="border-r border-border">{row.currentValidUntil}</TableCell>
-                    <TableCell className="text-accent border-r border-border">{row.currentProtocol}</TableCell>
-                    <TableCell className="text-muted-foreground border-r border-border">{row.lastUpdated}</TableCell>
-                    <TableCell className="text-muted-foreground border-r border-border">{row.lastUpdatedBy}</TableCell>
+
                     <TableCell className="border-r border-border">
-                      <span className="px-2 py-1 rounded">
-                        {row.status === "Active" && "Active"}
-                        {row.status === "PendingMaker" && "Pending (Maker)"}
-                        {row.status === "DeletedByMaker" && "Deleted"}
-                        {row.status === "Approved" && "Approved"}
-                        {row.status === "Dissmised" && "Dismissed"}
-                      </span>
+                      <div>
+                        {row.status === "Active" && <span className="px-2 py-1 rounded text-sm bg-muted/20">Active</span>}
+                        {row.status === "PendingMaker" && <span className="px-2 py-1 rounded text-sm bg-warning/20">Pending (Maker)</span>}
+                        {row.status === "DeletedByMaker" && <span className="px-2 py-1 rounded text-sm bg-destructive/10">Deleted</span>}
+                        {row.status === "Approved" && <span className="px-2 py-1 rounded text-sm bg-success/20">Approved</span>}
+                        {row.status === "Dissmised" && <span className="px-2 py-1 rounded text-sm bg-destructive/20">Dismissed</span>}
+                      </div>
                     </TableCell>
+
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={() => openView(row)}>
                           <Edit className="h-4 w-4 mr-1" />
                           View
                         </Button>
 
-                        {/*
-                          Edit: maker can create/edit a pending request.
-                          If row has pending — Edit should allow to modify existing request (or create new).
-                        */}
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
+                        {/* Edit hidden if pending exists */}
+                        {!row.pending?.status && (
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        )}
 
-                        {/* If there is a pending request — show withdraw (maker) */}
+                        {/* Withdraw / delete action shown as an extra button near the row (styled to appear outside table) */}
                         {row.pending?.status === "PendingMaker" && (
-                          <Button variant="destructive" size="sm" onClick={() => withdrawRequest(row.code)}>
+                          <Button variant="destructive" size="sm" onClick={() => withdrawRequest(row.code)} className="ml-2">
                             <X className="h-4 w-4" />
                           </Button>
+                        )}
+
+                        {/* For testing/demo — approve/reject visible for anyone (in real: restricted to Approval role) */}
+                        {row.pending?.status === "PendingMaker" && (
+                          <>
+                            <Button size="sm" className="bg-success text-white" onClick={() => approveRequest(row.code)}>
+                              Approve
+                            </Button>
+                            <Button size="sm" className="bg-destructive text-white" onClick={() => rejectRequest(row.code)}>
+                              Reject
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
@@ -401,6 +447,7 @@ const CountryLimits: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
+            {/* NOTE: floating instruction showing that X is "near" row (visual approximate). */}
           </div>
         </div>
       </div>
@@ -408,31 +455,23 @@ const CountryLimits: React.FC = () => {
       {/* Dialogs */}
       <AddCountryLimitDialog open={addOpen} onOpenChange={setAddOpen} onSave={handleAdd} />
 
-      {/* Edit dialog: we pass selected row; Edit dialog should call handleSubmitRequest */}
       <EditCountryLimitDialog
         open={editOpen}
         onOpenChange={setEditOpen}
         country={selected}
-        onSave={(updated) => {
-          // Edit dialog returns a CountryRecord-like object with pending fields set
-          handleSubmitRequest(updated);
+        onSave={(payload) => {
+          // payload: { code, pending: PendingBlock }
+          handleSubmitRequest(payload);
           setEditOpen(false);
         }}
         currentUserLogin={"maker_user"}
       />
 
-      {/* View dialog: we pass selected row and handlers for approve/reject/withdraw */}
       <ViewCountryLimitDialog
         open={viewOpen}
         onOpenChange={setViewOpen}
         country={selected}
       />
-
-      {/* NOTE: Approve/Reject functions are available in this component:
-          - approveRequest(code)
-          - rejectRequest(code)
-         In production these should be invoked only by users with Approval role.
-      */}
     </div>
   );
 };
