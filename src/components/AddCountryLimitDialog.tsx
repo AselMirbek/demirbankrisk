@@ -16,6 +16,16 @@ interface AddCountryLimitDialogProps {
   onSave: (country: any) => void;
 }
 
+const countryOptions = [
+  { code: "TR", name: "Turkey" },
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "KZ", name: "Kazakhstan" },
+  { code: "KG", name: "Kyrgyzstan" },
+];
+
 const AddCountryLimitDialog = ({
   open,
   onOpenChange,
@@ -31,8 +41,18 @@ const AddCountryLimitDialog = ({
     protocolNo: "",
   });
 
-  const handleSave = () => {
-    if (!formData.code || !formData.name || !formData.limit) return;
+  const selectCountry = (e: any) => {
+    const found = countryOptions.find((c) => c.code === e.target.value);
+
+    setFormData({
+      ...formData,
+      code: found?.code || "",
+      name: found?.name || "",
+    });
+  };
+
+  const handleSendRequest = () => {
+    if (!formData.code || !formData.limit) return;
 
     const newEntry = {
       ...formData,
@@ -42,6 +62,16 @@ const AddCountryLimitDialog = ({
       limitExceeded: "No",
       lastUpdated: today,
       lastUpdatedBy: "risk_user",
+      status: "Pending",        // <-- заявка
+      pending: {
+        oldLimit: "0",
+        newLimit: formData.limit,
+        oldProtocol: "",
+        newProtocol: formData.protocolNo,
+        oldValidUntil: "",
+        newValidUntil: formData.validUntil,
+      },
+      history: [],
     };
 
     onSave(newEntry);
@@ -52,36 +82,41 @@ const AddCountryLimitDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Add Country Limit</DialogTitle>
+          <DialogTitle>New Country Limit Request</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 py-4">
+
+          {/* ---- SELECT COUNTRY ---- */}
+          <div className="space-y-2 col-span-2">
+            <Label>Select Country</Label>
+            <select
+              className="border rounded-md p-2 w-full bg-background"
+              onChange={selectCountry}
+            >
+              <option value="">Choose...</option>
+              {countryOptions.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.code} — {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Autofilled Code */}
           <div className="space-y-2">
-            <Label htmlFor="code">Code</Label>
-            <Input
-              id="code"
-              placeholder="GB"
-              value={formData.code}
-              onChange={(e) =>
-                setFormData({ ...formData, code: e.target.value })
-              }
-            />
+            <Label>Country Code</Label>
+            <Input value={formData.code} disabled />
+          </div>
+
+          {/* Autofilled Name */}
+          <div className="space-y-2">
+            <Label>Country Name</Label>
+            <Input value={formData.name} disabled />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Country Name</Label>
-            <Input
-              id="name"
-              placeholder="Great Britain"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="limit">Limit</Label>
+            <Label htmlFor="limit">New Limit</Label>
             <Input
               id="limit"
               type="number"
@@ -106,7 +141,7 @@ const AddCountryLimitDialog = ({
           </div>
 
           <div className="space-y-2 col-span-2">
-            <Label htmlFor="protocolNo">Protocol No</Label>
+            <Label htmlFor="protocolNo">New Protocol No</Label>
             <Input
               id="protocolNo"
               placeholder="BD-150/2025"
@@ -118,7 +153,7 @@ const AddCountryLimitDialog = ({
           </div>
 
           <div className="space-y-2 col-span-2">
-            <Label>Last Updated</Label>
+            <Label>Request Date</Label>
             <Input value={today} disabled />
           </div>
         </div>
@@ -127,8 +162,13 @@ const AddCountryLimitDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-success hover:bg-success/90">
-            Save
+
+          {/* 🔥 Button for sending request */}
+          <Button
+            onClick={handleSendRequest}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Send Request
           </Button>
         </DialogFooter>
       </DialogContent>
