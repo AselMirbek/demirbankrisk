@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, Edit, Search, X, Check } from "lucide-react";
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, Download, Edit, Plus, Search, X,Check } from "lucide-react";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
+import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import ApprovalDialog from "./ApprovalDialog";
+
 const approvalCount = 3;
 
 export default function AdminCountryLimits() {
@@ -51,12 +53,20 @@ export default function AdminCountryLimits() {
   const approvalCount = requests.filter((r) => r.status === "Pending").length;
 
   // dialogs
+  const navigate = useNavigate();
+  const [filterOpen, setFilterOpen] = useState(true);
+  const [searchValue, setSearchValue] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [approvalOpen, setApprovalOpen] = useState(false);
 
   const [selected, setSelected] = useState(null);
-
+  
+const filtered = useMemo(() => {
+    if (!searchValue) return data;
+    const s = searchValue.toLowerCase();
+    return data.filter((r) => r.code.toLowerCase().includes(s) || r.name.toLowerCase().includes(s));
+  }, [data, searchValue]);
   // ------------------------ HANDLERS --------------------------
   const openEdit = (row) => {
     setSelected(row);
@@ -100,6 +110,34 @@ export default function AdminCountryLimits() {
     );
 
     setEditOpen(false);
+  };
+/** Withdraw (maker) - mark DeletedByMaker and add history entry */
+  const withdrawRequest = (code: string, by = "maker_user") => {
+    setData((prev) =>
+      prev.map((r) => {
+        if (r.code !== code) return r;
+        if (!r.pending) return r;
+        const now = new Date().toISOString();
+        const hist: HistoryRecord = {
+          changedAt: now,
+          changedBy: by,
+          approvedBy: null,
+          oldLimit: r.pending.oldLimit,
+          newLimit: r.pending.newLimit,
+          oldProtocol: r.pending.oldProtocol,
+          newProtocol: r.pending.newProtocol,
+          oldValidUntil: r.pending.oldValidUntil,
+          newValidUntil: r.pending.newValidUntil,
+          status: "DeletedByMaker",
+        };
+        return {
+          ...r,
+          pending: null,
+          status: "Active",
+          history: [hist, ...r.history],
+        };
+      })
+    );
   };
 
   const approve = (req) => {
@@ -166,7 +204,48 @@ export default function AdminCountryLimits() {
     </span>
   </Button>
       </div>
+      <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
+          <div className="bg-card rounded-lg border border-border mb-4">
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
+              <div className="flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Filter</span>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="p-4 pt-0">
+                <div className="flex flex-wrap gap-3 items-center">
+                  <div className="relative w-[300px]">
+                    <Input
+                      placeholder="country code/name"
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                      className="pr-10"
+                    />
+                    <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3">
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
 
+                  <Button variant="destructive" size="sm" onClick={() => setSearchValue("")}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filter
+                  </Button>
+
+                  <Button size="sm" className="bg-success text-white" onClick={() => setAddOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Country Limit
+                  </Button>
+
+                  <Button size="sm" className="bg-muted/80" onClick={() => { console.log("Export to excel (implement)"); }}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Excel
+                  </Button>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
       {/* ------------ General table ----------------- */}
       <div className="bg-card rounded-lg border p-4">
         <Table>
@@ -239,6 +318,12 @@ export default function AdminCountryLimits() {
                       Edit
                     </Button>
               )}
+                    {/* Withdraw / delete action shown as an extra button near the row (styled to appear outside table) */}
+                        {row.pending?.status === "PendingMaker" && (
+                          <Button variant="ghost" size="icon" onClick={() => withdrawRequest(row.code)} className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
 
                   </div>
                 </TableCell>
@@ -261,7 +346,7 @@ export default function AdminCountryLimits() {
         onOpenChange={setViewOpen}
         country={selected}
       />
-
+<AddCountryLimitDialog open={addOpen} onOpenChange={setAddOpen} onSave={handleAdd} />
       <ApprovalDialog
         open={approvalOpen}
         onOpenChange={setApprovalOpen}
