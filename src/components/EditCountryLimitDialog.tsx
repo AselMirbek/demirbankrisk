@@ -4,55 +4,64 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CountryRecord } from "./CountryLimits";
+import { CountryRecord, PendingBlock } from "./CountryLimits";
 
-const EditCountryLimitDialog: React.FC<{
+type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   country: CountryRecord | null;
-  onSave: (updated: CountryRecord) => void;
+  onSave: (payload: { code: string; pending: PendingBlock }) => void;
   currentUserLogin?: string;
-}> = ({ open, onOpenChange, country, onSave, currentUserLogin = "maker_user" }) => {
+};
+
+const EditCountryLimitDialog: React.FC<Props> = ({ open, onOpenChange, country, onSave, currentUserLogin = "maker_user" }) => {
   const [newLimit, setNewLimit] = useState("");
   const [newValidUntil, setNewValidUntil] = useState("");
   const [newProtocol, setNewProtocol] = useState("");
 
   useEffect(() => {
     if (country) {
-      setNewLimit(country.currentLimit ?? "");
-      setNewValidUntil(country.currentValidUntil ?? "");
-      setNewProtocol(country.currentProtocol ?? "");
+      // if already has pending, prefill with pending values so maker can modify existing request
+      if (country.pending) {
+        setNewLimit(country.pending.newLimit ?? country.currentLimit);
+        setNewValidUntil(country.pending.newValidUntil ?? country.currentValidUntil);
+        setNewProtocol(country.pending.newProtocol ?? country.currentProtocol);
+      } else {
+        setNewLimit(country.currentLimit);
+        setNewValidUntil(country.currentValidUntil);
+        setNewProtocol(country.currentProtocol);
+      }
     } else {
       setNewLimit("");
       setNewValidUntil("");
       setNewProtocol("");
     }
-  }, [country]);
+  }, [country, open]);
 
   if (!country) return null;
 
   const handleSave = () => {
-    const updated: CountryRecord = {
-      ...country,
+    const now = new Date().toISOString();
+    const pending: PendingBlock = {
       oldLimit: country.currentLimit,
       newLimit,
       oldValidUntil: country.currentValidUntil,
-      newValidUntil,
+      newValidUntil: newValidUntil || country.currentValidUntil,
       oldProtocol: country.currentProtocol,
       newProtocol,
       requestedBy: currentUserLogin,
-      requestedAt: new Date().toISOString(),
+      requestedAt: now,
       status: "PendingMaker",
     };
-    onSave(updated);
-    onOpenChange(false);
+
+    onSave({ code: country.code, pending });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit / Create Request — {country.name}</DialogTitle>
+          <DialogTitle>{country ? `Edit / Request — ${country.name}` : "Edit Country Limit"}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 py-4">
@@ -104,7 +113,7 @@ const EditCountryLimitDialog: React.FC<{
 
           <div>
             <Label>New Valid Until</Label>
-            <Input value={newValidUntil} onChange={(e) => setNewValidUntil(e.target.value)} />
+            <Input type="date" value={newValidUntil} onChange={(e) => setNewValidUntil(e.target.value)} />
           </div>
 
           <div>
