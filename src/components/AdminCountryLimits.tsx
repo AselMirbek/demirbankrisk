@@ -1,25 +1,29 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Download, Edit, Plus, Search, X,Check } from "lucide-react";
+
+import { ChevronDown, Download, Edit, Plus, Search, X, Check } from "lucide-react";
+
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
 import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import ApprovalDialog from "./ApprovalDialog";
 
-const approvalCount = 3;
-
 export default function AdminCountryLimits() {
+  const navigate = useNavigate();
+
   // ------------------------ DATA --------------------------
   const [countries, setCountries] = useState([
     {
       code: "TR",
       name: "Turkey",
-      balance: "487,000",
-      landing: "52,000",
+      balance: "487000",
+      landing: "52000",
       currentLimit: "298000",
       overlimit: "0",
       limitExceeded: "No",
@@ -53,21 +57,29 @@ export default function AdminCountryLimits() {
   const approvalCount = requests.filter((r) => r.status === "Pending").length;
 
   // dialogs
-  const navigate = useNavigate();
   const [filterOpen, setFilterOpen] = useState(true);
   const [searchValue, setSearchValue] = useState("");
+
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [approvalOpen, setApprovalOpen] = useState(false);
 
   const [selected, setSelected] = useState(null);
-  
-const filtered = useMemo(() => {
-    if (!searchValue) return data;
+
+  // ------------------------ FILTER --------------------------
+  const filtered = useMemo(() => {
+    if (!searchValue) return countries;
     const s = searchValue.toLowerCase();
-    return data.filter((r) => r.code.toLowerCase().includes(s) || r.name.toLowerCase().includes(s));
-  }, [data, searchValue]);
+    return countries.filter(
+      (r) =>
+        r.code.toLowerCase().includes(s) ||
+        r.name.toLowerCase().includes(s)
+    );
+  }, [countries, searchValue]);
+
   // ------------------------ HANDLERS --------------------------
+
   const openEdit = (row) => {
     setSelected(row);
     setEditOpen(true);
@@ -78,10 +90,13 @@ const filtered = useMemo(() => {
     setViewOpen(true);
   };
 
+  const handleAdd = (newRow) => {
+    setCountries((prev) => [...prev, newRow]);
+  };
+
   const submitEdit = (payload) => {
     const { code, pending } = payload;
 
-    // add request
     setRequests((prev) => [
       ...prev,
       {
@@ -93,14 +108,13 @@ const filtered = useMemo(() => {
         oldValidUntil: pending.oldValidUntil,
         newValidUntil: pending.newValidUntil,
         oldProtocol: pending.oldProtocol,
-        newProtocol: pending.newProtocol,    
-        requestedBy: "approval_user",
+        newProtocol: pending.newProtocol,
+        requestedBy: "risk_maker",
         requestedAt: new Date().toISOString(),
         status: "Pending",
       },
     ]);
 
-    // mark row as pending
     setCountries((prev) =>
       prev.map((r) =>
         r.code === code
@@ -111,37 +125,33 @@ const filtered = useMemo(() => {
 
     setEditOpen(false);
   };
-/** Withdraw (maker) - mark DeletedByMaker and add history entry */
-  const withdrawRequest = (code: string, by = "maker_user") => {
-    setData((prev) =>
+
+  const withdrawRequest = (code, by = "maker_user") => {
+    setCountries((prev) =>
       prev.map((r) => {
         if (r.code !== code) return r;
         if (!r.pending) return r;
+
         const now = new Date().toISOString();
-        const hist: HistoryRecord = {
+        const record = {
           changedAt: now,
           changedBy: by,
-          approvedBy: null,
           oldLimit: r.pending.oldLimit,
           newLimit: r.pending.newLimit,
-          oldProtocol: r.pending.oldProtocol,
-          newProtocol: r.pending.newProtocol,
-          oldValidUntil: r.pending.oldValidUntil,
-          newValidUntil: r.pending.newValidUntil,
           status: "DeletedByMaker",
         };
+
         return {
           ...r,
           pending: null,
           status: "Active",
-          history: [hist, ...r.history],
+          history: [record, ...r.history],
         };
       })
     );
   };
 
   const approve = (req) => {
-    // update live row
     setCountries((prev) =>
       prev.map((r) =>
         r.code === req.code
@@ -149,7 +159,7 @@ const filtered = useMemo(() => {
               ...r,
               currentLimit: req.newLimit,
               currentValidUntil: req.newValidUntil,
-              currentProtocol: req.protocol,
+              currentProtocol: req.newProtocol,
               pending: null,
               status: "Active",
               lastUpdated: new Date().toISOString().split("T")[0],
@@ -159,7 +169,6 @@ const filtered = useMemo(() => {
       )
     );
 
-    // update request status
     setRequests((prev) =>
       prev.map((r) =>
         r.id === req.id ? { ...r, status: "Approved" } : r
@@ -174,10 +183,11 @@ const filtered = useMemo(() => {
       )
     );
 
-    // remove pending from row
     setCountries((prev) =>
       prev.map((r) =>
-        r.code === req.code ? { ...r, pending: null, status: "Active" } : r
+        r.code === req.code
+          ? { ...r, pending: null, status: "Active" }
+          : r
       )
     );
   };
@@ -188,65 +198,69 @@ const filtered = useMemo(() => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Admin Panel — Country Limits</h1>
 
-        {/* 🔥 Notification Button */}
-     <Button
-    onClick={() => setApprovalOpen(true)}
-    className="relative bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-2 flex items-center gap-2"
-    >
-    <Check className="h-4 w-4" />
+        <Button
+          onClick={() => setApprovalOpen(true)}
+          className="relative bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-2 flex items-center gap-2"
+        >
+          <Check className="h-4 w-4" />
 
-    <span className="
-      absolute -right-2 -top-2
-      bg-white text-blue-600 text-xs font-bold
-      w-6 h-6 rounded-full flex items-center justify-center shadow
-    ">
-      {approvalCount}
-    </span>
-  </Button>
+          <span
+            className="
+              absolute -right-2 -top-2
+              bg-white text-blue-600 text-xs font-bold
+              w-6 h-6 rounded-full flex items-center justify-center shadow
+            "
+          >
+            {approvalCount}
+          </span>
+        </Button>
       </div>
+
+      {/* -------- FILTER ---------- */}
       <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
-          <div className="bg-card rounded-lg border border-border mb-4">
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
-              <div className="flex items-center gap-2">
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Filter</span>
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="p-4 pt-0">
-                <div className="flex flex-wrap gap-3 items-center">
-                  <div className="relative w-[300px]">
-                    <Input
-                      placeholder="country code/name"
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      className="pr-10"
-                    />
-                    <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <Button variant="destructive" size="sm" onClick={() => setSearchValue("")}>
-                    <X className="h-4 w-4 mr-2" />
-                    Clear Filter
-                  </Button>
-
-                  <Button size="sm" className="bg-success text-white" onClick={() => setAddOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Country Limit
-                  </Button>
-
-                  <Button size="sm" className="bg-muted/80" onClick={() => { console.log("Export to excel (implement)"); }}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Excel
+        <div className="bg-card rounded-lg border border-border mb-4">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50">
+            <div className="flex items-center gap-2">
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Filter</span>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="p-4 pt-0">
+              <div className="flex flex-wrap gap-3 items-center">
+                <div className="relative w-[300px]">
+                  <Input
+                    placeholder="country code/name"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3">
+                    <Search className="h-4 w-4" />
                   </Button>
                 </div>
+
+                <Button variant="destructive" size="sm" onClick={() => setSearchValue("")}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear Filter
+                </Button>
+
+                <Button size="sm" className="bg-success text-white" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Country Limit
+                </Button>
+
+                <Button size="sm" className="bg-muted/80">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Excel
+                </Button>
               </div>
-            </CollapsibleContent>
-          </div>
-        </Collapsible>
-      {/* ------------ General table ----------------- */}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* -------- TABLE ---------- */}
       <div className="bg-card rounded-lg border p-4">
         <Table>
           <TableHeader>
@@ -257,21 +271,22 @@ const filtered = useMemo(() => {
               <TableHead>Landing</TableHead>
               <TableHead>Limit</TableHead>
               <TableHead>Overlimit</TableHead>
-              <TableHead>Limit Exceeded</TableHead>
+              <TableHead>Exceeded</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {countries.map((row) => (
+            {filtered.map((row) => (
               <TableRow key={row.code}>
                 <TableCell>{row.code}</TableCell>
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.balance}</TableCell>
                 <TableCell>{row.landing}</TableCell>
                 <TableCell>{row.currentLimit}</TableCell>
-                <TableCell>{row.overlimit ?? "0"}</TableCell>
+                <TableCell>{row.overlimit}</TableCell>
+
                 <TableCell>
                   <Badge
                     className={
@@ -283,8 +298,6 @@ const filtered = useMemo(() => {
                     {row.limitExceeded}
                   </Badge>
                 </TableCell>
-
-                <TableCell>{row.currentValidUntil}</TableCell>
 
                 <TableCell>
                   <Badge
@@ -300,31 +313,27 @@ const filtered = useMemo(() => {
 
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openView(row)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => openView(row)}>
                       View
                     </Button>
 
                     {row.status !== "Pending" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEdit(row)}
-                      >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-              )}
-                    {/* Withdraw / delete action shown as an extra button near the row (styled to appear outside table) */}
-                        {row.pending?.status === "PendingMaker" && (
-                          <Button variant="ghost" size="icon" onClick={() => withdrawRequest(row.code)} className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1">
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
 
+                    {row.pending && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
+                        onClick={() => withdrawRequest(row.code)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -333,7 +342,7 @@ const filtered = useMemo(() => {
         </Table>
       </div>
 
-      {/* ---------------- Dialogs ----------------- */}
+      {/* -------- DIALOGS ---------- */}
       <EditCountryLimitDialog
         open={editOpen}
         onOpenChange={setEditOpen}
@@ -346,7 +355,13 @@ const filtered = useMemo(() => {
         onOpenChange={setViewOpen}
         country={selected}
       />
-<AddCountryLimitDialog open={addOpen} onOpenChange={setAddOpen} onSave={handleAdd} />
+
+      <AddCountryLimitDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSave={handleAdd}
+      />
+
       <ApprovalDialog
         open={approvalOpen}
         onOpenChange={setApprovalOpen}
@@ -357,3 +372,4 @@ const filtered = useMemo(() => {
     </div>
   );
 }
+
