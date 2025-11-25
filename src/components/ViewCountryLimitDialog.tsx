@@ -32,6 +32,8 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 }) => {
   if (!country) return null;
 
+  const hasPending = country.pending !== null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-auto">
@@ -41,7 +43,9 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* ========================== CURRENT LIVE TABLE ========================== */}
+        {/* ========================================================
+              CURRENT LIVE BLOCK
+        ========================================================== */}
         <div className="mt-4">
           <h3 className="font-semibold text-lg mb-2">Current (Live)</h3>
 
@@ -70,18 +74,24 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
                 <TableCell>Landing</TableCell>
                 <TableCell>{country.landing}</TableCell>
               </TableRow>
+
               <TableRow>
                 <TableCell>Current Limit</TableCell>
-                <TableCell className="font-medium">{country.currentLimit}</TableCell>
+                <TableCell className="font-medium text-blue-600">
+                  {country.currentLimit}
+                </TableCell>
               </TableRow>
+
               <TableRow>
                 <TableCell>Valid Until</TableCell>
                 <TableCell>{country.currentValidUntil}</TableCell>
               </TableRow>
+
               <TableRow>
                 <TableCell>Protocol No</TableCell>
                 <TableCell>{country.currentProtocol}</TableCell>
               </TableRow>
+
               <TableRow>
                 <TableCell>Last Updated</TableCell>
                 <TableCell>
@@ -92,11 +102,17 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
           </Table>
         </div>
 
-        {/* ========================== ACTIVE REQUEST ========================== */}
+        {/* ========================================================
+              ACTIVE REQUEST (Pending)
+        ========================================================== */}
         <div className="mt-6">
-          <h3 className="font-semibold text-lg mb-2">Active Request (Pending)</h3>
+          <h3 className="font-semibold text-lg mb-2">
+            Active Request {hasPending ? "(Pending)" : ""}
+          </h3>
 
-          {country.pending ? (
+          {!hasPending ? (
+            <p className="text-muted-foreground">No active request.</p>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -106,59 +122,84 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
               </TableHeader>
 
               <TableBody>
+                {/* NEW FULL INFO INSIDE REQUEST */}
+                <TableRow>
+                  <TableCell>Code</TableCell>
+                  <TableCell>{country.code}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Country</TableCell>
+                  <TableCell>{country.name}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Balance</TableCell>
+                  <TableCell>{country.balance}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Landing</TableCell>
+                  <TableCell>{country.landing}</TableCell>
+                </TableRow>
+
                 <TableRow>
                   <TableCell>Old Limit</TableCell>
-                  <TableCell>{country.pending.oldLimit}</TableCell>
+                  <TableCell>{country.pending!.oldLimit}</TableCell>
                 </TableRow>
+
                 <TableRow>
                   <TableCell>New Limit</TableCell>
                   <TableCell className="font-semibold text-blue-600">
-                    {country.pending.newLimit}
+                    {country.pending!.newLimit}
                   </TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>Old Valid Until</TableCell>
-                  <TableCell>{country.pending.oldValidUntil}</TableCell>
+                  <TableCell>{country.pending!.oldValidUntil}</TableCell>
                 </TableRow>
+
                 <TableRow>
                   <TableCell>New Valid Until</TableCell>
-                  <TableCell>{country.pending.newValidUntil}</TableCell>
+                  <TableCell>{country.pending!.newValidUntil}</TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>Old Protocol</TableCell>
-                  <TableCell>{country.pending.oldProtocol}</TableCell>
+                  <TableCell>{country.pending!.oldProtocol}</TableCell>
                 </TableRow>
+
                 <TableRow>
                   <TableCell>New Protocol</TableCell>
-                  <TableCell>{country.pending.newProtocol}</TableCell>
+                  <TableCell>{country.pending!.newProtocol}</TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>Requested By</TableCell>
-                  <TableCell>{country.pending.requestedBy}</TableCell>
+                  <TableCell>{country.pending!.requestedBy}</TableCell>
                 </TableRow>
+
                 <TableRow>
                   <TableCell>Requested At</TableCell>
-                  <TableCell>{country.pending.requestedAt}</TableCell>
+                  <TableCell>{country.pending!.requestedAt}</TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>Status</TableCell>
                   <TableCell className="font-semibold">
-                    {country.pending.status}
+                    {country.pending!.status}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
-          ) : (
-            <p className="text-muted-foreground">No active request.</p>
           )}
         </div>
 
-        {/* ========================== HISTORY ========================== */}
-        <div className="mt-6">
+        {/* ========================================================
+              HISTORY
+        ========================================================== */}
+        <div className="mt-6 mb-4">
           <h3 className="font-semibold text-lg mb-2">History</h3>
 
           {country.history.length === 0 ? (
@@ -198,7 +239,7 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
           )}
         </div>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
@@ -207,4 +248,3 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 };
 
 export default ViewCountryLimitDialog;
-
