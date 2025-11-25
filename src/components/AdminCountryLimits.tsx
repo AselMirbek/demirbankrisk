@@ -8,6 +8,7 @@ import { ChevronDown, Edit, Search, X, Check } from "lucide-react";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
 import ApprovalDialog from "./ApprovalDialog";
+const approvalCount = 3;
 
 export default function AdminCountryLimits() {
   // ------------------------ DATA --------------------------
@@ -146,13 +147,20 @@ export default function AdminCountryLimits() {
         <h1 className="text-2xl font-semibold">Admin Panel — Country Limits</h1>
 
         {/* 🔥 Notification Button */}
-        <Button
-          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-5 py-2 flex items-center gap-2"
-          onClick={() => setApprovalOpen(true)}
-        >
-          <Check className="h-4 w-4" />
-          {approvalCount}
-        </Button>
+     <Button
+    onClick={() => setApprovalOpen(true)}
+    className="relative bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-2 flex items-center gap-2"
+    >
+    <Check className="h-4 w-4" />
+
+    <span className="
+      absolute -right-2 -top-2
+      bg-white text-blue-600 text-xs font-bold
+      w-6 h-6 rounded-full flex items-center justify-center shadow
+    ">
+      {approvalCount}
+    </span>
+  </Button>
       </div>
 
       {/* ------------ General table ----------------- */}
