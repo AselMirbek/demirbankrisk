@@ -59,7 +59,8 @@ const ApprovalDialog: React.FC<Props> = ({
                 <TableHead>New Limit</TableHead>
                 <TableHead>Old Valid Until</TableHead>
                 <TableHead>New Valid Until</TableHead>
-                <TableHead>Protocol</TableHead>
+                <TableHead>New Protocol</TableHead>
+                <TableHead>Old Protocol</TableHead>
                 <TableHead>Requested By</TableHead>
                 <TableHead>Requested At</TableHead>
                 <TableHead>Status</TableHead>
