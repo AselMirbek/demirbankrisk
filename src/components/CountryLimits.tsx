@@ -425,21 +425,9 @@ const CountryLimits: React.FC = () => {
 
                         {/* Withdraw / delete action shown as an extra button near the row (styled to appear outside table) */}
                         {row.pending?.status === "PendingMaker" && (
-                          <Button variant="destructive" size="sm" onClick={() => withdrawRequest(row.code)} className="ml-2">
-                            <X className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" onClick={() => withdrawRequest(row.code)} className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1">
+                            <X className="h-3 w-3" />
                           </Button>
-                        )}
-
-                        {/* For testing/demo — approve/reject visible for anyone (in real: restricted to Approval role) */}
-                        {row.pending?.status === "PendingMaker" && (
-                          <>
-                            <Button size="sm" className="bg-success text-white" onClick={() => approveRequest(row.code)}>
-                              Approve
-                            </Button>
-                            <Button size="sm" className="bg-destructive text-white" onClick={() => rejectRequest(row.code)}>
-                              Reject
-                            </Button>
-                          </>
                         )}
                       </div>
                     </TableCell>
