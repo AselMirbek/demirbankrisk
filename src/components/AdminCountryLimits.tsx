@@ -1,261 +1,245 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from "@/components/ui/table";
+import { ChevronDown, Edit, Search, X, Check } from "lucide-react";
 
-import { Check, X, Edit, Plus } from "lucide-react";
-
-import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
+import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
+import ApprovalDialog from "./ApprovalDialog";
 
 export default function AdminCountryLimits() {
-  const [activeTab, setActiveTab] = useState("approval");
-
-  const [showAdd, setShowAdd] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<any>(null);
-
-  // DATA for Approval
-  const [approvalData, setApprovalData] = useState([
+  // ------------------------ DATA --------------------------
+  const [countries, setCountries] = useState([
     {
-      id: 1,
-      code: "CA",
-      countryName: "Canada",
-      oldLimit: "139M",
-      newLimit: "579M",
-      protocol: "BD-100/2025",
-      requestedBy: "risk_analyst",
-      requestedAt: "2025-01-19",
-      approved: false,
-      rejected: false,
-    },
-    {
-      id: 2,
-      code: "SG",
-      countryName: "Singapore",
-      oldLimit: "186M",
-      newLimit: "204M",
-      protocol: "BD-101/2025",
-      requestedBy: "risk_maker",
-      requestedAt: "2025-01-17",
-      approved: false,
-      rejected: false,
+      code: "TR",
+      name: "Turkey",
+      balance: "487,000",
+      landing: "52,000",
+      currentLimit: "298000",
+      currentProtocol: "BD-104/2024",
+      currentValidUntil: "2025-01-01",
+      lastUpdated: "2025-01-10",
+      lastUpdatedBy: "risk_user",
+      status: "Active",
+      pending: null,
+      history: [],
     },
   ]);
 
-  // approve / reject
-  const toggleStatus = (id: number, field: "approved" | "rejected") => {
-    setApprovalData((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, [field]: !row[field] } : row
-      )
-    );
+  const [requests, setRequests] = useState([
+    {
+      id: 1,
+      code: "TR",
+      countryName: "Turkey",
+      oldLimit: "298000",
+      newLimit: "348000",
+      oldValidUntil: "2025-01-01",
+      newValidUntil: "2026-01-01",
+      protocol: "BD-204/2025",
+      requestedBy: "risk_maker",
+      requestedAt: "2025-02-01",
+      status: "Pending",
+    },
+  ]);
+
+  const approvalCount = requests.filter((r) => r.status === "Pending").length;
+
+  // dialogs
+  const [editOpen, setEditOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [approvalOpen, setApprovalOpen] = useState(false);
+
+  const [selected, setSelected] = useState(null);
+
+  // ------------------------ HANDLERS --------------------------
+  const openEdit = (row) => {
+    setSelected(row);
+    setEditOpen(true);
   };
 
-  // open Edit dialog
-  const openEditDialog = (row: any) => {
-    setSelectedCountry({
-      code: row.code,
-      name: row.countryName,
-      balance: "",
-      landing: "",
-      limit: row.newLimit,
-      overlimit: "0",
-      limitExceeded: "No",
-      validUntil: "Unlimited",
-      protocolNo: row.protocol,
-      lastUpdated: row.requestedAt,
-      lastUpdatedBy: row.requestedBy,
-    });
-
-    setShowEdit(true);
+  const openView = (row) => {
+    setSelected(row);
+    setViewOpen(true);
   };
 
-  const handleSaveEdit = (updated: any) => {
-    setApprovalData((prev) =>
-      prev.map((row) =>
-        row.code === updated.code
-          ? {
-              ...row,
-              newLimit: updated.limit,
-              protocol: updated.protocolNo,
-            }
-          : row
-      )
-    );
-  };
+  const submitEdit = (payload) => {
+    const { code, pending } = payload;
 
-  const handleSaveAdd = (data: any) => {
-    setApprovalData((prev) => [
+    // add request
+    setRequests((prev) => [
       ...prev,
       {
         id: Date.now(),
-        code: data.country.slice(0, 2).toUpperCase(),
-        countryName: data.country,
-        oldLimit: "0",
-        newLimit: data.limit + "M",
-        protocol: data.protocol,
-        requestedBy: "admin_panel",
-        requestedAt: data.date,
-        approved: false,
-        rejected: false,
+        code,
+        countryName: countries.find((c) => c.code === code)?.name,
+        oldLimit: pending.oldLimit,
+        newLimit: pending.newLimit,
+        oldValidUntil: pending.oldValidUntil,
+        newValidUntil: pending.newValidUntil,
+        protocol: pending.newProtocol,
+        requestedBy: "approval_user",
+        requestedAt: new Date().toISOString(),
+        status: "Pending",
       },
     ]);
+
+    // mark row as pending
+    setCountries((prev) =>
+      prev.map((r) =>
+        r.code === code
+          ? { ...r, status: "Pending", pending: pending }
+          : r
+      )
+    );
+
+    setEditOpen(false);
   };
 
+  const approve = (req) => {
+    // update live row
+    setCountries((prev) =>
+      prev.map((r) =>
+        r.code === req.code
+          ? {
+              ...r,
+              currentLimit: req.newLimit,
+              currentValidUntil: req.newValidUntil,
+              currentProtocol: req.protocol,
+              pending: null,
+              status: "Active",
+              lastUpdated: new Date().toISOString().split("T")[0],
+              lastUpdatedBy: "approval_user",
+            }
+          : r
+      )
+    );
+
+    // update request status
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === req.id ? { ...r, status: "Approved" } : r
+      )
+    );
+  };
+
+  const reject = (req) => {
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === req.id ? { ...r, status: "Rejected" } : r
+      )
+    );
+
+    // remove pending from row
+    setCountries((prev) =>
+      prev.map((r) =>
+        r.code === req.code ? { ...r, pending: null, status: "Active" } : r
+      )
+    );
+  };
+
+  // ------------------------ UI --------------------------
   return (
-    <div className="min-h-screen bg-background p-6">
-      <h1 className="text-2xl font-semibold mb-6">
-        Admin Panel -- Country Limits
-      </h1>
+    <div className="min-h-screen p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Admin Panel — Country Limits</h1>
 
-      <Tabs defaultValue="approval" className="space-y-4">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger
-            value="approval"
-            className="data-[state=active]:bg-warning data-[state=active]:text-white"
-          >
-            Approval
-          </TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+        {/* 🔥 Notification Button */}
+        <Button
+          className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-5 py-2 flex items-center gap-2"
+          onClick={() => setApprovalOpen(true)}
+        >
+          <Check className="h-4 w-4" />
+          {approvalCount}
+        </Button>
+      </div>
 
-        {/* ADD BUTTON */}
-        <div className="flex justify-end">
-          <Button
-            className="bg-success text-white hover:bg-success/90"
-            onClick={() => setShowAdd(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Country Limit
-          </Button>
-        </div>
+      {/* ------------ General table ----------------- */}
+      <div className="bg-card rounded-lg border p-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Code</TableHead>
+              <TableHead>Country</TableHead>
+              <TableHead>Balance</TableHead>
+              <TableHead>Landing</TableHead>
+              <TableHead>Limit</TableHead>
+              <TableHead>Valid Until</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-        {/* APPROVAL TAB */}
-        <TabsContent value="approval">
-          <div className="bg-card border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>Old Limit</TableHead>
-                  <TableHead>New Limit</TableHead>
-                  <TableHead>Protocol</TableHead>
-                  <TableHead>Requested By</TableHead>
-                  <TableHead>Requested At</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>✓</TableHead>
-                  <TableHead>✕</TableHead>
-                  <TableHead>Edit</TableHead>
-                </TableRow>
-              </TableHeader>
+          <TableBody>
+            {countries.map((row) => (
+              <TableRow key={row.code}>
+                <TableCell>{row.code}</TableCell>
+                <TableCell>{row.name}</TableCell>
+                <TableCell>{row.balance}</TableCell>
+                <TableCell>{row.landing}</TableCell>
+                <TableCell>{row.currentLimit}</TableCell>
+                <TableCell>{row.currentValidUntil}</TableCell>
 
-              <TableBody>
-                {approvalData.map((row) => (
-                  <TableRow key={row.id} className="hover:bg-muted/40">
-                    <TableCell>{row.code}</TableCell>
-                    <TableCell>{row.countryName}</TableCell>
-                    <TableCell>{row.oldLimit}</TableCell>
-                    <TableCell className="text-success font-medium">
-                      {row.newLimit}
-                    </TableCell>
-                    <TableCell className="text-blue-600 underline">
-                      {row.protocol}
-                    </TableCell>
-                    <TableCell>{row.requestedBy}</TableCell>
-                    <TableCell>{row.requestedAt}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={
+                      row.status === "Pending"
+                        ? "bg-yellow-400"
+                        : "bg-muted"
+                    }
+                  >
+                    {row.status}
+                  </Badge>
+                </TableCell>
 
-                    <TableCell>
-                      {row.approved ? (
-                        <Badge className="bg-success text-white">Approved</Badge>
-                      ) : row.rejected ? (
-                        <Badge className="bg-destructive text-white">Rejected</Badge>
-                      ) : (
-                        <Badge className="bg-warning text-white">Pending</Badge>
-                      )}
-                    </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openView(row)}
+                    >
+                      View
+                    </Button>
 
-                    {/* APPROVE */}
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-success hover:text-success/80"
-                        onClick={() => toggleStatus(row.id, "approved")}
-                      >
-                        <Check />
-                      </Button>
-                    </TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEdit(row)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-                    {/* REJECT */}
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive/80"
-                        onClick={() => toggleStatus(row.id, "rejected")}
-                      >
-                        <X />
-                      </Button>
-                    </TableCell>
-
-                    {/* EDIT */}
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-800"
-                        onClick={() => openEditDialog(row)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="general">
-          <p className="text-muted-foreground">General section</p>
-        </TabsContent>
-
-        <TabsContent value="history">
-          <p className="text-muted-foreground">History section</p>
-        </TabsContent>
-      </Tabs>
-
-      {/* DIALOGS */}
-      <AddCountryLimitDialog
-        show={showAdd}
-        onClose={() => setShowAdd(false)}
-        onSave={handleSaveAdd}
+      {/* ---------------- Dialogs ----------------- */}
+      <EditCountryLimitDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        country={selected}
+        onSave={submitEdit}
       />
 
-      <EditCountryLimitDialog
-        open={showEdit}
-        onOpenChange={setShowEdit}
-        country={selectedCountry}
-        onSave={handleSaveEdit}
+      <ViewCountryLimitDialog
+        open={viewOpen}
+        onOpenChange={setViewOpen}
+        country={selected}
+      />
+
+      <ApprovalDialog
+        open={approvalOpen}
+        onOpenChange={setApprovalOpen}
+        requests={requests}
+        onApprove={approve}
+        onReject={reject}
       />
     </div>
   );
 }
-
