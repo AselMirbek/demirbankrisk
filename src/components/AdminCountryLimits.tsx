@@ -19,6 +19,8 @@ export default function AdminCountryLimits() {
       balance: "487,000",
       landing: "52,000",
       currentLimit: "298000",
+      overlimit: "0",
+      limitExceeded: "No",
       currentProtocol: "BD-104/2024",
       currentValidUntil: "2025-01-01",
       lastUpdated: "2025-01-10",
@@ -38,7 +40,8 @@ export default function AdminCountryLimits() {
       newLimit: "348000",
       oldValidUntil: "2025-01-01",
       newValidUntil: "2026-01-01",
-      protocol: "BD-204/2025",
+      oldProtocol: "BD-104/2024",
+      newProtocol: "BD-204/2025",
       requestedBy: "risk_maker",
       requestedAt: "2025-02-01",
       status: "Pending",
@@ -79,7 +82,8 @@ export default function AdminCountryLimits() {
         newLimit: pending.newLimit,
         oldValidUntil: pending.oldValidUntil,
         newValidUntil: pending.newValidUntil,
-        protocol: pending.newProtocol,
+        oldProtocol: pending.oldProtocol,
+        newProtocol: pending.newProtocol,    
         requestedBy: "approval_user",
         requestedAt: new Date().toISOString(),
         status: "Pending",
@@ -173,7 +177,8 @@ export default function AdminCountryLimits() {
               <TableHead>Balance</TableHead>
               <TableHead>Landing</TableHead>
               <TableHead>Limit</TableHead>
-              <TableHead>Valid Until</TableHead>
+              <TableHead>Overlimit</TableHead>
+              <TableHead>Limit Exceeded</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -187,6 +192,19 @@ export default function AdminCountryLimits() {
                 <TableCell>{row.balance}</TableCell>
                 <TableCell>{row.landing}</TableCell>
                 <TableCell>{row.currentLimit}</TableCell>
+                <TableCell>{row.overlimit ?? "0"}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={
+                      row.limitExceeded === "Yes"
+                        ? "bg-red-500 text-white"
+                        : "bg-muted"
+                    }
+                  >
+                    {row.limitExceeded}
+                  </Badge>
+                </TableCell>
+
                 <TableCell>{row.currentValidUntil}</TableCell>
 
                 <TableCell>
@@ -211,14 +229,17 @@ export default function AdminCountryLimits() {
                       View
                     </Button>
 
-                    <Button
+                    {row.status !== "Pending" && (
+                    <Buttot
                       variant="ghost"
                       size="sm"
                       onClick={() => openEdit(row)}
-                    >
+                      >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
+              )}
+
                   </div>
                 </TableCell>
               </TableRow>
