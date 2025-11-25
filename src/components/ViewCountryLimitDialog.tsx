@@ -214,6 +214,8 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
                     <TableHead>Approved By</TableHead>
                     <TableHead>Old Limit</TableHead>
                     <TableHead>New Limit</TableHead>
+                    <TableHead>Old Protocol</TableHead>
+                    <TableHead>New Protocol</TableHead>
                     <TableHead>Old Valid Until</TableHead>
                     <TableHead>New Valid Until</TableHead>
                     <TableHead>Status</TableHead>
@@ -228,6 +230,8 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
                       <TableCell>{h.approvedBy ?? "-"}</TableCell>
                       <TableCell>{h.oldLimit}</TableCell>
                       <TableCell>{h.newLimit}</TableCell>
+                      <TableCell>{h.oldprotocol}</TableCell>
+                      <TableCell>{h.newprotocol}</TableCell>
                       <TableCell>{h.oldValidUntil}</TableCell>
                       <TableCell>{h.newValidUntil}</TableCell>
                       <TableCell>{h.status}</TableCell>
