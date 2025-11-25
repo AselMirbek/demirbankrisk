@@ -230,7 +230,7 @@ export default function AdminCountryLimits() {
                     </Button>
 
                     {row.status !== "Pending" && (
-                    <Buttot
+                    <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => openEdit(row)}
