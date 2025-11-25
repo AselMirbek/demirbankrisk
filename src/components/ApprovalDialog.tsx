@@ -81,11 +81,13 @@ const ApprovalDialog: React.FC<Props> = ({
 
                   <TableCell>{req.oldValidUntil ?? "-"}</TableCell>
                   <TableCell>{req.newValidUntil ?? "-"}</TableCell>
-
                   <TableCell className="text-blue-600 underline">
-                    {req.protocol}
+                    {req.oldProtocol}
                   </TableCell>
-
+                  <TableCell className="text-blue-600 underline">
+                    {req.newProtocol}
+                  </TableCell>
+             
                   <TableCell>{req.requestedBy}</TableCell>
                   <TableCell>{req.requestedAt}</TableCell>
 
