@@ -11,6 +11,7 @@ import { ChevronDown, Download, Edit, Plus, Search, X } from "lucide-react";
 import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
+import HistoryDialog from "./HistoryDialog";
 
 export type HistoryRecord = {
   changedAt: string;
@@ -155,6 +156,7 @@ const CountryLimits: React.FC = () => {
 
   const [data, setData] = useState<CountryRecord[]>(initialData());
   const [selected, setSelected] = useState<CountryRecord | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (!searchValue) return data;
@@ -207,33 +209,7 @@ const CountryLimits: React.FC = () => {
     );
   };
 
-  /** Withdraw (maker) - mark DeletedByMaker and add history entry */
-  const withdrawRequest = (code: string, by = "maker_user") => {
-    setData((prev) =>
-      prev.map((r) => {
-        if (r.code !== code) return r;
-        if (!r.pending) return r;
-        const now = new Date().toISOString();
-        const hist: HistoryRecord = {
-          changedAt: now,
-          changedBy: by,
-          approvedBy: null,
-          oldLimit: r.pending.oldLimit,
-          newLimit: r.pending.newLimit,
-          oldValidUntil: r.pending.oldValidUntil,
-          newValidUntil: r.pending.newValidUntil,
-          status: "DeletedByMaker",
-        };
-        return {
-          ...r,
-          pending: null,
-          status: "Active",
-          history: [hist, ...r.history],
-        };
-      })
-    );
-  };
-
+ 
   /** Approve (for simulation) */
   const approveRequest = (code: string, approver = "approval_user") => {
     setData((prev) =>
@@ -314,14 +290,21 @@ const CountryLimits: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Risk Management → Country Limits</h1>
-          <Button className="bg-primary text-primary-foreground" onClick={() => navigate("/admin")}>
-            Go to Admin Panel
-          </Button>
-        </div>
+    <div className="flex items-center justify-between mb-6">
+  <h1 className="text-2xl font-semibold">Risk Management → Country Limits</h1>
+
+  <div className="flex items-center gap-3">
+    <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+      History
+    </Button>
+
+    <Button className="bg-primary text-primary-foreground" onClick={() => navigate("/admin")}>
+      Go to Admin Panel
+    </Button>
+  </div>
+</div>
+
+
 
         <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
           <div className="bg-card rounded-lg border border-border mb-4">
@@ -402,7 +385,6 @@ const CountryLimits: React.FC = () => {
                       <div>
                         {row.status === "Active" && <span className="px-2 py-1 rounded text-sm bg-muted/20">Active</span>}
                         {row.status === "PendingMaker" && <span className="px-2 py-1 rounded text-sm bg-warning/20">Pending (Maker)</span>}
-                        {row.status === "DeletedByMaker" && <span className="px-2 py-1 rounded text-sm bg-destructive/10">Deleted</span>}
                         {row.status === "Approved" && <span className="px-2 py-1 rounded text-sm bg-success/20">Approved</span>}
                         {row.status === "Dissmised" && <span className="px-2 py-1 rounded text-sm bg-destructive/20">Dismissed</span>}
                       </div>
@@ -423,12 +405,6 @@ const CountryLimits: React.FC = () => {
                           </Button>
                         )}
 
-                        {/* Withdraw / delete action shown as an extra button near the row (styled to appear outside table) */}
-                        {row.pending?.status === "PendingMaker" && (
-                          <Button variant="ghost" size="icon" onClick={() => withdrawRequest(row.code)} className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 ml-1">
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -454,6 +430,11 @@ const CountryLimits: React.FC = () => {
         }}
         currentUserLogin={"maker_user"}
       />
+<HistoryDialog
+  open={historyOpen}
+  onOpenChange={setHistoryOpen}
+  data={data}
+/>
 
       <ViewCountryLimitDialog
         open={viewOpen}
