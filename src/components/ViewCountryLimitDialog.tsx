@@ -32,7 +32,9 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 }) => {
   if (!country) return null;
 
-  const hasPending = country.pending !== null;
+  // Показываем pending только если он активный
+  const hasPending =
+    country.pending?.status === "PendingMaker";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,75 +46,12 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
         </DialogHeader>
 
         {/* ========================================================
-              CURRENT LIVE BLOCK
+              CURRENT LIVE (показываем ТОЛЬКО если нет PendingMaker)
         ========================================================== */}
-        <div className="mt-4">
-          <h3 className="font-semibold text-lg mb-2">Current (Live)</h3>
+        {!hasPending && (
+          <div className="mt-4">
+            <h3 className="font-semibold text-lg mb-2">Current (Live)</h3>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Field</TableHead>
-                <TableHead>Value</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              <TableRow>
-                <TableCell>Code</TableCell>
-                <TableCell>{country.code}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Country</TableCell>
-                <TableCell>{country.name}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Balance</TableCell>
-                <TableCell>{country.balance}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Landing</TableCell>
-                <TableCell>{country.landing}</TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell>Current Limit</TableCell>
-                <TableCell className="font-medium text-blue-600">
-                  {country.currentLimit}
-                </TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell>Valid Until</TableCell>
-                <TableCell>{country.currentValidUntil}</TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell>Protocol No</TableCell>
-                <TableCell>{country.currentProtocol}</TableCell>
-              </TableRow>
-
-              <TableRow>
-                <TableCell>Last Updated</TableCell>
-                <TableCell>
-                  {country.lastUpdated} by {country.lastUpdatedBy}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* ========================================================
-              ACTIVE REQUEST (Pending)
-        ========================================================== */}
-        <div className="mt-6">
-          <h3 className="font-semibold text-lg mb-2">
-            Active Request {hasPending ? "(Pending)" : ""}
-          </h3>
-
-          {!hasPending ? (
-            <p className="text-muted-foreground">No active request.</p>
-          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -122,7 +61,6 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
               </TableHeader>
 
               <TableBody>
-                {/* NEW FULL INFO INSIDE REQUEST */}
                 <TableRow>
                   <TableCell>Code</TableCell>
                   <TableCell>{country.code}</TableCell>
@@ -141,6 +79,64 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
                 <TableRow>
                   <TableCell>Landing</TableCell>
                   <TableCell>{country.landing}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Current Limit</TableCell>
+                  <TableCell className="font-medium text-blue-600">
+                    {country.currentLimit}
+                  </TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Valid Until</TableCell>
+                  <TableCell>{country.currentValidUntil}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Protocol No</TableCell>
+                  <TableCell>{country.currentProtocol}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Last Updated</TableCell>
+                  <TableCell>
+                    {country.lastUpdated} by {country.lastUpdatedBy}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* ========================================================
+              ACTIVE REQUEST (PendingMaker)
+        ========================================================== */}
+        <div className="mt-6">
+          <h3 className="font-semibold text-lg mb-2">
+            Active Request {hasPending ? "(Pending)" : ""}
+          </h3>
+
+          {!hasPending ? (
+            <p className="text-muted-foreground">No active request.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Field</TableHead>
+                  <TableHead>Value</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                <TableRow>
+                  <TableCell>Code</TableCell>
+                  <TableCell>{country.code}</TableCell>
+                </TableRow>
+
+                <TableRow>
+                  <TableCell>Country</TableCell>
+                  <TableCell>{country.name}</TableCell>
                 </TableRow>
 
                 <TableRow>
@@ -167,12 +163,12 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 
                 <TableRow>
                   <TableCell>Old Protocol</TableCell>
-                  <TableCell>{country.pending!.oldProtocol}</TableCell>
+                  <TableCell>{country.pending!.oldProtocol ?? "-"}</TableCell>
                 </TableRow>
 
                 <TableRow>
                   <TableCell>New Protocol</TableCell>
-                  <TableCell>{country.pending!.newProtocol}</TableCell>
+                  <TableCell>{country.pending!.newProtocol ?? "-"}</TableCell>
                 </TableRow>
 
                 <TableRow>
@@ -187,7 +183,7 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 
                 <TableRow>
                   <TableCell>Status</TableCell>
-                  <TableCell className="font-semibold">
+                  <TableCell className="font-semibold text-yellow-600">
                     {country.pending!.status}
                   </TableCell>
                 </TableRow>
@@ -230,8 +226,8 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
                       <TableCell>{h.approvedBy ?? "-"}</TableCell>
                       <TableCell>{h.oldLimit}</TableCell>
                       <TableCell>{h.newLimit}</TableCell>
-                      <TableCell>{h.oldProtocol}</TableCell>
-                      <TableCell>{h.newProtocol}</TableCell>
+                      <TableCell>{h.oldProtocol ?? "-"}</TableCell>
+                      <TableCell>{h.newProtocol ?? "-"}</TableCell>
                       <TableCell>{h.oldValidUntil}</TableCell>
                       <TableCell>{h.newValidUntil}</TableCell>
                       <TableCell>{h.status}</TableCell>
@@ -252,3 +248,4 @@ const ViewCountryLimitDialog: React.FC<Props> = ({
 };
 
 export default ViewCountryLimitDialog;
+
