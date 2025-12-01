@@ -289,20 +289,25 @@ const CountryLimits: React.FC = () => {
     setData((prev) => [newRec, ...prev]);
   };
 
-  return (
-    <div className="flex items-center justify-between mb-6">
-  <h1 className="text-2xl font-semibold">Risk Management → Country Limits</h1>
+return (
+  <div className="min-h-screen p-6 bg-background">
+    <div className="max-w-[1400px] mx-auto">
 
-  <div className="flex items-center gap-3">
-    <Button variant="outline" onClick={() => setHistoryOpen(true)}>
-      History
-    </Button>
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Risk Management → Country Limits</h1>
 
-    <Button className="bg-primary text-primary-foreground" onClick={() => navigate("/admin")}>
-      Go to Admin Panel
-    </Button>
-  </div>
-</div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+            History
+          </Button>
+
+          <Button className="bg-primary text-primary-foreground" onClick={() => navigate("/admin")}>
+            Go to Admin Panel
+          </Button>
+        </div>
+      </div>
+
 
 
 
