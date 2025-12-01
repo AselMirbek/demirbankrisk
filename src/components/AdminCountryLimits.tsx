@@ -332,20 +332,23 @@ export default function AdminCountryLimits() {
         onSave={handleAdd}
       />
 
-      <ApprovalDialog
+           <ApprovalDialog
         open={approvalOpen}
         onOpenChange={setApprovalOpen}
         requests={requests}
         onApprove={approve}
         onReject={reject}
       />
+
       <HistoryDialog
-  open={historyOpen}
-  onOpenChange={setHistoryOpen}
-  data={data}
-/>
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        data={countries}
+      />
 
     </div>
-  );
+  </div>
+);
 }
+
 
