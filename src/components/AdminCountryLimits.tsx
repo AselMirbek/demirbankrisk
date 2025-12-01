@@ -13,6 +13,8 @@ import EditCountryLimitDialog from "./EditCountryLimitDialog";
 import ViewCountryLimitDialog from "./ViewCountryLimitDialog";
 import AddCountryLimitDialog from "./AddCountryLimitDialog";
 import ApprovalDialog from "./ApprovalDialog";
+import HistoryDialog from "./HistoryDialog";
+
 
 export default function AdminCountryLimits() {
   const navigate = useNavigate();
@@ -126,31 +128,6 @@ export default function AdminCountryLimits() {
     setEditOpen(false);
   };
 
-  const withdrawRequest = (code, by = "maker_user") => {
-    setCountries((prev) =>
-      prev.map((r) => {
-        if (r.code !== code) return r;
-        if (!r.pending) return r;
-
-        const now = new Date().toISOString();
-        const record = {
-          changedAt: now,
-          changedBy: by,
-          oldLimit: r.pending.oldLimit,
-          newLimit: r.pending.newLimit,
-          status: "DeletedByMaker",
-        };
-
-        return {
-          ...r,
-          pending: null,
-          status: "Active",
-          history: [record, ...r.history],
-        };
-      })
-    );
-  };
-
   const approve = (req) => {
     setCountries((prev) =>
       prev.map((r) =>
@@ -197,6 +174,10 @@ export default function AdminCountryLimits() {
     <div className="min-h-screen p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Admin Panel — Country Limits</h1>
+ <div className="flex items-center gap-3">
+    <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+      History
+    </Button>
 
         <Button
           onClick={() => setApprovalOpen(true)}
@@ -323,17 +304,6 @@ export default function AdminCountryLimits() {
                         Edit
                       </Button>
                     )}
-
-                    {row.pending && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
-                        onClick={() => withdrawRequest(row.code)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -369,6 +339,12 @@ export default function AdminCountryLimits() {
         onApprove={approve}
         onReject={reject}
       />
+      <HistoryDialog
+  open={historyOpen}
+  onOpenChange={setHistoryOpen}
+  data={data}
+/>
+
     </div>
   );
 }
